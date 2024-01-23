@@ -45,8 +45,8 @@ def init_setting():
     parser.add_argument('--password', help='Admin password', default='')
 
     parser.add_argument('--fetch_player_interval_sec', help='RCON fetch player interval(sec)', default=30)
-    # parser.add_argument('--use_auto_player_kick', help='Use auto kick', default=False)
-    # parser.add_argument('--auto_kick_player_interval_sec', help='Auto kick interval(sec)', default=3*60)
+    parser.add_argument('--use_auto_player_kick', help='Use auto kick', default=False)
+    parser.add_argument('--auto_kick_player_interval_sec', help='Auto kick interval(sec)', default=3*60)
 
     parser.add_argument('--log_filepath', help='Player log filepath', default='player_log.json')
 
@@ -56,8 +56,8 @@ def init_setting():
     settings['rcon']['password'] = args.password
 
     settings['time']['fetch_player_interval_sec'] = int(args.fetch_player_interval_sec)
-    # settings['time']['use_auto_player_kick'] = bool(args.use_auto_player_kick)
-    # settings['time']['auto_kick_player_interval_sec'] = int(args.auto_kick_player_interval_sec)
+    settings['time']['use_auto_player_kick'] = bool(args.use_auto_player_kick)
+    settings['time']['auto_kick_player_interval_sec'] = int(args.auto_kick_player_interval_sec)
 
     settings['data']['log_filepath'] = args.log_filepath
 
@@ -106,15 +106,27 @@ def export_players_json(player_log: dict):
         print('-----export player log-----')
         json.dump(player_log, f, ensure_ascii=False)
 
-def fetch_new_players(rcon: MCRcon, old_players: dict):
-    """接続中かつ新規のユーザを取得
+def fetch_players(rcon: MCRcon) -> dict:
+    """接続集のユーザ情報wを取得
 
     Args:
         rcon (MCRcon): RCON
-        old_player_log (dict): 過去に取得済みのプレイヤ情報
+
+    Returns:
+        player_log (
+        {
+            steamid(string) : 
+            {
+                name: string, 
+                playeruid: string,
+                steamid: string,
+                playeruid_hex: string,
+                sav_filename: string
+            }
+        }): 接続中のユーザ情報
     """
     print('-----fetch players-----')
-    new_players = {}
+    players = {}
     for _ in range(3):
         try:
             res = rcon.command('ShowPlayers')
@@ -137,11 +149,7 @@ def fetch_new_players(rcon: MCRcon, old_players: dict):
                 playeruid_hex_padded = playeruid_hex.ljust(settings['data']['save_filename_length'], '0')
                 sav_filename = f"{playeruid_hex_padded}.{settings['data']['save_file_extension']}"
 
-                exists_old_log =  steamid in old_players
-                if exists_old_log:
-                    continue
-
-                new_players[steamid] = {
+                players[steamid] = {
                     "name": name,
                     "playeruid": playeruid,
                     "steamid": steamid,
@@ -152,7 +160,85 @@ def fetch_new_players(rcon: MCRcon, old_players: dict):
         except:
             rcon.connect()
 
+    return players
+
+def extract_new_players(all_players: dict, login_players: dict):
+    """新規プレイヤを抽出
+
+    Args:
+        all_players (dict): 過去に取得済みのプレイヤ情報
+        login_players (dict): 現在ログイン中のプレイヤ情報
+    """
+    print('-----extract new players-----')
+
+    new_players = {}
+    for steamid, value in login_players.items():
+        old_player = steamid in all_players
+        if old_player:
+            continue
+
+        new_players[steamid] = value
+
     return new_players
+
+def merge_login_players(prev_players: dict, now_players: dict) -> dict:
+    """ログイン中のユーザ情報をマージ(ログアウト済みは排除)
+
+    Args:
+        prev_players (dict): 前回ログインのユーザ
+        {
+            steamid(string): first login time(datetime)
+        }
+
+        now_players (dict): 今ログイン中のユーザ
+        {
+            steamid(string) : 
+            {
+                name: string, 
+                playeruid: string,
+                steamid: string,
+                playeruid_hex: string,
+                sav_filename: string
+            }
+        }
+
+    Returns:
+        dict: { "steamid": datetime 最初にログインした時間 }
+    """
+    print('-----Merge login players-----')
+    now = dt.now()
+    merged_login_players = {}
+    for steamid in now_players.keys():
+        exists_prev = steamid in prev_players
+        if exists_prev:
+            merged_login_players[steamid] = prev_players[steamid]
+        else: 
+            merged_login_players[steamid] = now
+
+    return merged_login_players
+
+def kick_players(rcon: MCRcon, merged_login_players: dict):
+    """長時間ログインしているユーザをキック
+
+    Args:
+        merged_login_players (dict): ログイン中のユーザ
+        {
+            steamid(string): first login time(datetime)
+        }
+    """
+    print('-----Kick players-----')
+    now = dt.now()
+    for steamid, first_login_time in merged_login_players.items():
+        is_over_login_time_length = (now - first_login_time).total_seconds() >= settings['time']['auto_kick_player_interval_sec']
+        if not is_over_login_time_length:
+            continue
+
+        try:
+            command = f'KickPlayer {steamid}'
+            rcon.command(command)
+            print(command)
+        except:
+            print(f'Faild kick command {steamid}({first_login_time})')
 
 if __name__ == "__main__":
     print('----start logger-----')
@@ -165,16 +251,27 @@ if __name__ == "__main__":
         print('-----rcon connect success-----')
 
         all_players = import_players_json()
+        login_players = {}
+        prev_login_players = {}
         while True:
             now = dt.now()
             need_fetch = (now - prev_fetch_time).total_seconds() >= settings['time']['fetch_player_interval_sec']
             if need_fetch:
-                new_players = fetch_new_players(rcon, all_players)
+                login_players = fetch_players(rcon)
+                new_players = extract_new_players(all_players, login_players)
                 all_players = {**all_players, **new_players}
+                
                 prev_fetch_time = now
-            
+
                 exists_new_player = len(new_players) > 0
                 if exists_new_player:
                     export_players_json(all_players)
+
+                use_auto_player_kick = settings['time']['use_auto_player_kick']
+                if use_auto_player_kick:
+                    merged_login_players = merge_login_players(prev_login_players, login_players)
+                    kick_players(rcon, merged_login_players)
+
+                    prev_login_players = merged_login_players
 
             time.sleep(settings['time']['loop_interval_sec'])
