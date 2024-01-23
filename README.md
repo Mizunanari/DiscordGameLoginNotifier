@@ -1,1 +1,38 @@
-# Palworld
+# Palworld server player logger
+
+## Summary
+
+PalworldのサーバにRCON接続して一定時間毎にプレイヤ情報を出力します。
+
+ユーザがサーバに接続できないとき、ユーザのセーブデータが壊れている可能性があります。
+
+常にログを取ることで壊れたセーブデータの特定を容易にします。
+
+RCON connection to Palworld's server outputs player information at regular intervals.
+
+If a user cannot connect to the server, the user's save data may be corrupted.
+
+Constant logging makes it easier to identify corrupted saved data.
+
+## Attention
+
+何らかの原因によって`ShowPlayers`コマンドが使えないサーバがあります。
+
+このサーバに対してスクリプトを使用するとスクリプトは応答しなくなります。
+
+For some reason, some servers do not allow the `ShowPlayers` command.
+
+If you use the script against this server, the script will not respond.
+
+## Options
+
+次のコマンドを実行してヘルプを参照してください。
+
+Run the following commands for help
+
+`python .\main.py -h`
+
+## Command Example
+
+- `python .\main.py --password abcdefg`
+- `python .\main.py --address 123.456.789.0 --port 1234 --password abcdefg`
