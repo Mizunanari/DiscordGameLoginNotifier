@@ -128,9 +128,9 @@ def fetch_new_players(rcon: MCRcon, old_players: dict):
                 playeruid = row[1]
                 steamid = row[2]
 
-                is_valid_playeruid = playeruid != INVALID_PLAYER_UID
-                if is_valid_playeruid:
-                    print(f'Invalid user -> name: {name} staemid: {steamid}')
+                is_invalid_playeruid = playeruid == INVALID_PLAYER_UID
+                if is_invalid_playeruid:
+                    print(f'Invalid user -> name: {name} staemid: {steamid} playeruid: {playeruid}')
                     continue
                 
                 playeruid_hex = format(int(playeruid), 'x')
