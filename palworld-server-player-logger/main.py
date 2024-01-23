@@ -219,7 +219,7 @@ def merge_login_players(prev_players: dict, now_players: dict) -> dict:
     Returns:
         dict: { "steamid": datetime 最初にログインした時間 }
     """
-    print('-----Merge login players-----')
+    print('-----merge login players-----')
     now = dt.now()
     merged_login_players = {}
     for steamid in now_players.keys():
@@ -240,7 +240,7 @@ def kick_players(rcon: MCRcon, merged_login_players: dict):
             steamid(string): first login time(datetime)
         }
     """
-    print('-----Kick players-----')
+    print('-----kick players-----')
     now = dt.now()
     for steamid, first_login_time in merged_login_players.items():
         is_over_login_time_length = (now - first_login_time).total_seconds() >= settings['time']['auto_kick_player_interval_sec']
