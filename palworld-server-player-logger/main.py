@@ -42,8 +42,8 @@ def init_setting():
     parser.add_argument('--password', help='Admin password', default='')
 
     parser.add_argument('--fetch_player_interval_sec', help='RCON fetch player interval(sec)', default=30)
-    parser.add_argument('--use_auto_player_kick', help='Use auto kick', default=False)
-    parser.add_argument('--auto_kick_player_interval_sec', help='Auto kick interval(sec)', default=3*60)
+    # parser.add_argument('--use_auto_player_kick', help='Use auto kick', default=False)
+    # parser.add_argument('--auto_kick_player_interval_sec', help='Auto kick interval(sec)', default=3*60)
 
     parser.add_argument('--log_filepath', help='Player log filepath', default='player_log.json')
 
@@ -53,8 +53,8 @@ def init_setting():
     settings['rcon']['password'] = args.password
 
     settings['time']['fetch_player_interval_sec'] = int(args.fetch_player_interval_sec)
-    settings['time']['use_auto_player_kick'] = bool(args.use_auto_player_kick)
-    settings['time']['auto_kick_player_interval_sec'] = int(args.auto_kick_player_interval_sec)
+    # settings['time']['use_auto_player_kick'] = bool(args.use_auto_player_kick)
+    # settings['time']['auto_kick_player_interval_sec'] = int(args.auto_kick_player_interval_sec)
 
     settings['data']['log_filepath'] = args.log_filepath
 
