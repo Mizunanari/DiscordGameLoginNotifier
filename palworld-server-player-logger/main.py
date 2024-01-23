@@ -155,7 +155,7 @@ def fetch_new_players(rcon: MCRcon, old_players: dict):
     return new_players
 
 if __name__ == "__main__":
-    print('----start sav filename logger-----')
+    print('----start logger-----')
 
     init_setting()
 
