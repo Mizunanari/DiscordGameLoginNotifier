@@ -32,7 +32,21 @@ Run the following commands for help
 
 `python .\main.py -h`
 
-## Command Example
+## Command example
 
 - `python .\main.py --password abcdefg`
 - `python .\main.py --address 123.456.789.0 --port 1234 --password abcdefg`
+
+## Log example
+
+```json
+{
+    "76561198035441627": {
+        "name": "rin_jugatla",
+        "playeruid": "1166585980",
+        "steamid": "76561198035441627",
+        "playeruid_hex": "4588b07c",
+        "sav_filename": "4588b07c000000000000000000000000.sav"
+    }
+}
+```
