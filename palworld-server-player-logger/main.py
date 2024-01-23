@@ -160,8 +160,8 @@ def fetch_players(rcon: MCRcon) -> dict:
         except:
             rcon.connect()
 
-        print('-----login players-----')
-        pprint(players)
+    print('-----Login players-----')
+    pprint(players)
 
     return players
 
