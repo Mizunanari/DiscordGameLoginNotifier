@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "sav-filename-logger"
+name = "palworld-server-player-logger"
 version = "0.1.0"
 description = ""
 authors = ["rinjugatla <rin.jugatla@gmail.com>"]
