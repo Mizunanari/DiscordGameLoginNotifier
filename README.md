@@ -39,6 +39,8 @@ Run the following commands for help
 
 ## Log example
 
+- Valid user information
+
 ```json
 {
     "76561198035441627": {
@@ -47,6 +49,22 @@ Run the following commands for help
         "steamid": "76561198035441627",
         "playeruid_hex": "4588b07c",
         "sav_filename": "4588b07c000000000000000000000000.sav"
+    }
+}
+```
+
+- Invalid user information
+
+If it is invalid, it is not logged to a file, but logged to the console.
+
+```json
+{
+    "76561198035441627": {
+        "name": "rin_jugatla",
+        "playeruid": "00000000",
+        "steamid": "76561198035441627",
+        "playeruid_hex": "0",
+        "sav_filename": "00000000000000000000000000000000.sav"
     }
 }
 ```

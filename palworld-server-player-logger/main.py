@@ -4,6 +4,9 @@ from datetime import datetime as dt
 
 import os, json, csv, io, argparse, time
 
+# ShowPlayersで不正なUIDの時に発行される
+INVALID_PLAYER_UID = '00000000'
+
 settings = {
     'rcon' : {
         # Palworld サーバIPアドレス
@@ -124,6 +127,11 @@ def fetch_new_players(rcon: MCRcon, old_players: dict):
                 name = row[0]
                 playeruid = row[1]
                 steamid = row[2]
+
+                is_valid_playeruid = playeruid != INVALID_PLAYER_UID
+                if is_valid_playeruid:
+                    print(f'Invalid user -> name: {name} staemid: {steamid}')
+                    continue
                 
                 playeruid_hex = format(int(playeruid), 'x')
                 playeruid_hex_padded = playeruid_hex.ljust(settings['data']['save_filename_length'], '0')
