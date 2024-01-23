@@ -160,10 +160,21 @@ def fetch_players(rcon: MCRcon) -> dict:
         except:
             rcon.connect()
 
-    print('-----Login players-----')
-    pprint(players)
-
     return players
+
+def print_login_players(login_players: dict):
+    """ログイン中のプレイヤを表示
+
+    Args:
+        login_players (dict): ログイン中のプレイヤ情報
+    """
+    
+    player_count = len(login_players)
+    print(f'-----login players({player_count})-----')
+    for player in login_players.values():
+        name = player['name']
+        staemid = player['steamid']
+        print(f'{name}({staemid})')
 
 def extract_new_players(all_players: dict, login_players: dict):
     """新規プレイヤを抽出
@@ -265,6 +276,8 @@ if __name__ == "__main__":
                 all_players = {**all_players, **new_players}
                 
                 prev_fetch_time = now
+
+                print_login_players(login_players)
 
                 exists_new_player = len(new_players) > 0
                 if exists_new_player:
