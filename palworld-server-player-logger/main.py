@@ -16,8 +16,6 @@ settings = {
     'time': {
         # プレイヤ情報の取得間隔
         'fetch_player_interval_sec': 30,
-        # ログファイルの出力間隔
-        'export_player_interval_sec': 60,
         # 自動でプレイヤキックを行うか
         'use_auto_player_kick': False,
         # ロード中にプレイヤキックを行うとサーバが無限ロードされるので安全よりに設定する方がよい
@@ -44,7 +42,6 @@ def init_setting():
     parser.add_argument('--password', help='Admin password', default='')
 
     parser.add_argument('--fetch_player_interval_sec', help='RCON fetch player interval(sec)', default=30)
-    parser.add_argument('--export_player_interval_sec', help='Export player log interval(sec)', default=60)
     parser.add_argument('--use_auto_player_kick', help='Use auto kick', default=False)
     parser.add_argument('--auto_kick_player_interval_sec', help='Auto kick interval(sec)', default=3*60)
 
@@ -56,7 +53,6 @@ def init_setting():
     settings['rcon']['password'] = args.password
 
     settings['time']['fetch_player_interval_sec'] = int(args.fetch_player_interval_sec)
-    settings['time']['export_player_interval_sec'] = int(args.export_player_interval_sec)
     settings['time']['use_auto_player_kick'] = bool(args.use_auto_player_kick)
     settings['time']['auto_kick_player_interval_sec'] = int(args.auto_kick_player_interval_sec)
 
@@ -156,7 +152,6 @@ if __name__ == "__main__":
     init_setting()
 
     prev_fetch_time = dt.now()
-    prev_export_time = dt.now()
 
     with MCRcon(settings['rcon']['address'], settings['rcon']['password'], settings['rcon']['port']) as rcon:
         print('-----rcon connect success-----')
@@ -168,13 +163,10 @@ if __name__ == "__main__":
             if need_fetch:
                 new_players = fetch_new_players(rcon, all_players)
                 all_players = {**all_players, **new_players}
-
                 prev_fetch_time = now
             
-            need_export = (now - prev_export_time).total_seconds() >= settings['time']['export_player_interval_sec']
-            if need_export:
-                export_players_json(all_players)
-
-                prev_export_time = now
+                exists_new_player = len(new_players) > 0
+                if exists_new_player:
+                    export_players_json(all_players)
 
             time.sleep(settings['time']['loop_interval_sec'])
