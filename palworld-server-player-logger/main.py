@@ -160,6 +160,9 @@ def fetch_players(rcon: MCRcon) -> dict:
         except:
             rcon.connect()
 
+        print('-----login players-----')
+        pprint(players)
+
     return players
 
 def extract_new_players(all_players: dict, login_players: dict):
