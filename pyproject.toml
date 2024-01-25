@@ -8,6 +8,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.10"
 mcrcon = "^0.7.0"
+requests = "^2.31.0"
 
 
 [build-system]
