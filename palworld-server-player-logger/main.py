@@ -2,12 +2,18 @@ from mcrcon import MCRcon
 from pprint import pprint
 from datetime import datetime as dt
 
+import requests
+
 import os, json, csv, io, argparse, time
 
 # ShowPlayersで不正なUIDの時に発行される
 INVALID_PLAYER_UID = '00000000'
 
 settings = {
+    'discord': {
+        # Discord Webhook URL
+        'webhook_url': ''
+    },
     'rcon' : {
         # Palworld サーバIPアドレス
         'address': '127.0.0.1',
@@ -18,13 +24,13 @@ settings = {
     },
     'time': {
         # プレイヤ情報の取得間隔
-        'fetch_player_interval_sec': 30,
+        'fetch_player_interval_sec': 5,
         # 自動でプレイヤキックを行うか
         'use_auto_player_kick': False,
         # ロード中にプレイヤキックを行うとサーバが無限ロードされるので安全よりに設定する方がよい
         'auto_kick_player_interval_sec': 3 * 60,
         # ループ間隔 変更不要
-        'loop_interval_sec': 15
+        'loop_interval_sec': 2
     },
     'data': {
         # ファイルパス
@@ -40,25 +46,17 @@ def init_setting():
     """引数から設定を初期化
     """
     parser = argparse.ArgumentParser(description="Outputs log of Palworld Server's connectee information")
+    parser.add_argument('--webhook_url', help='Discord Webhook URL', default='')
     parser.add_argument('--address', help='Server address', default='127.0.0.1')
     parser.add_argument('--port', help='RCON port', default=25575)
     parser.add_argument('--password', help='Admin password', default='')
-
-    parser.add_argument('--fetch_player_interval_sec', help='RCON fetch player interval(sec)', default=30)
-    parser.add_argument('--use_auto_player_kick', help='Use auto kick', default=False)
-    parser.add_argument('--auto_kick_player_interval_sec', help='Auto kick interval(sec)', default=3*60)
-
     parser.add_argument('--log_filepath', help='Player log filepath', default='player_log.json')
 
     args = parser.parse_args()
+    settings['discord']['webhook_url'] = args.webhook_url
     settings['rcon']['address'] = args.address
     settings['rcon']['port'] = int(args.port)
     settings['rcon']['password'] = args.password
-
-    settings['time']['fetch_player_interval_sec'] = int(args.fetch_player_interval_sec)
-    settings['time']['use_auto_player_kick'] = bool(args.use_auto_player_kick)
-    settings['time']['auto_kick_player_interval_sec'] = int(args.auto_kick_player_interval_sec)
-
     settings['data']['log_filepath'] = args.log_filepath
 
 def import_players_json() -> dict:
@@ -81,8 +79,6 @@ def import_players_json() -> dict:
 
     with open(settings['data']['log_filepath'], 'r', encoding='utf-8') as f:
         player_log = json.load(f)
-        print('-----import player log-----')
-        pprint(player_log)
     
     return player_log
 
@@ -103,11 +99,10 @@ def export_players_json(player_log: dict):
         }): プレイヤー情報
     """
     with open(settings['data']['log_filepath'], 'w', encoding='utf-8') as f:
-        print('-----export player log-----')
         json.dump(player_log, f, ensure_ascii=False)
 
 def fetch_players(rcon: MCRcon) -> dict:
-    """接続集のユーザ情報wを取得
+    """接続中のユーザ情報を取得
 
     Args:
         rcon (MCRcon): RCON
@@ -125,7 +120,6 @@ def fetch_players(rcon: MCRcon) -> dict:
             }
         }): 接続中のユーザ情報
     """
-    print('-----fetch players-----')
     players = {}
     for _ in range(3):
         try:
@@ -142,7 +136,6 @@ def fetch_players(rcon: MCRcon) -> dict:
 
                 is_invalid_playeruid = playeruid == INVALID_PLAYER_UID
                 if is_invalid_playeruid:
-                    print(f'Invalid user -> name: {name} staemid: {steamid} playeruid: {playeruid}')
                     continue
                 
                 playeruid_hex = format(int(playeruid), 'x')
@@ -170,7 +163,6 @@ def print_login_players(login_players: dict):
     """
     
     player_count = len(login_players)
-    print(f'-----login players({player_count})-----')
     for player in login_players.values():
         name = player['name']
         staemid = player['steamid']
@@ -183,7 +175,6 @@ def extract_new_players(all_players: dict, login_players: dict):
         all_players (dict): 過去に取得済みのプレイヤ情報
         login_players (dict): 現在ログイン中のプレイヤ情報
     """
-    print('-----extract new players-----')
 
     new_players = {}
     for steamid, value in login_players.items():
@@ -195,99 +186,56 @@ def extract_new_players(all_players: dict, login_players: dict):
 
     return new_players
 
-def merge_login_players(prev_players: dict, now_players: dict) -> dict:
-    """ログイン中のユーザ情報をマージ(ログアウト済みは排除)
+def send_discord_webhook(login_players: dict, is_login: bool):
+    """Discord Webhookを使用してプレイヤ情報を送信
 
     Args:
-        prev_players (dict): 前回ログインのユーザ
-        {
-            steamid(string): first login time(datetime)
-        }
-
-        now_players (dict): 今ログイン中のユーザ
-        {
-            steamid(string) : 
-            {
-                name: string, 
-                playeruid: string,
-                steamid: string,
-                playeruid_hex: string,
-                sav_filename: string
-            }
-        }
-
-    Returns:
-        dict: { "steamid": datetime 最初にログインした時間 }
+        player (dict): プレイヤ情報
     """
-    print('-----merge login players-----')
-    now = dt.now()
-    merged_login_players = {}
-    for steamid in now_players.keys():
-        exists_prev = steamid in prev_players
-        if exists_prev:
-            merged_login_players[steamid] = prev_players[steamid]
-        else: 
-            merged_login_players[steamid] = now
 
-    return merged_login_players
+    if is_login:
+        login_or_logout = 'ログイン'
+    else:
+        login_or_logout = 'ログアウト'
 
-def kick_players(rcon: MCRcon, merged_login_players: dict):
-    """長時間ログインしているユーザをキック
+    player_count = len(login_players)
+    for player in login_players.values():
+        name = player['name']
+        staemid = player['steamid']
 
-    Args:
-        merged_login_players (dict): ログイン中のユーザ
-        {
-            steamid(string): first login time(datetime)
-        }
-    """
-    print('-----kick players-----')
-    now = dt.now()
-    for steamid, first_login_time in merged_login_players.items():
-        is_over_login_time_length = (now - first_login_time).total_seconds() >= settings['time']['auto_kick_player_interval_sec']
-        if not is_over_login_time_length:
-            continue
+    webhook_url = settings['discord']['webhook_url']
 
-        try:
-            command = f'KickPlayer {steamid}'
-            rcon.command(command)
-            print(command)
-        except:
-            print(f'Faild kick command {steamid}({first_login_time})')
+    if not webhook_url:
+        raise Exception('Discord Webhook URLが設定されていない')
+
+    message = f'{name}（{staemid}）が{login_or_logout}しました'
+    headers = {"Content-Type": "application/json"}
+    data = {"content": message}
+    request = requests.post(
+        webhook_url,
+        data=json.dumps(data).encode(),
+        headers=headers,
+    )
+    if request.status_code != 204:
+        print(f'Discord Web Hookの送信に失敗した。status_code: {request.status_code}')
 
 if __name__ == "__main__":
-    print('----start logger-----')
 
     init_setting()
 
     prev_fetch_time = dt.now()
 
     with MCRcon(settings['rcon']['address'], settings['rcon']['password'], settings['rcon']['port']) as rcon:
-        print('-----rcon connect success-----')
-
-        all_players = import_players_json()
+        old_login_players = {}
         login_players = {}
-        prev_login_players = {}
         while True:
-            now = dt.now()
-            need_fetch = (now - prev_fetch_time).total_seconds() >= settings['time']['fetch_player_interval_sec']
-            if need_fetch:
-                login_players = fetch_players(rcon)
-                new_players = extract_new_players(all_players, login_players)
-                all_players = {**all_players, **new_players}
-                
-                prev_fetch_time = now
 
-                print_login_players(login_players)
-
-                exists_new_player = len(new_players) > 0
-                if exists_new_player:
-                    export_players_json(all_players)
-
-                use_auto_player_kick = settings['time']['use_auto_player_kick']
-                if use_auto_player_kick:
-                    merged_login_players = merge_login_players(prev_login_players, login_players)
-                    kick_players(rcon, merged_login_players)
-
-                    prev_login_players = merged_login_players
-
+            old_login_players = import_players_json()
+            login_players = fetch_players(rcon)
+            new_login_players = extract_new_players(old_login_players, login_players)
+            
+            if new_login_players:
+                send_discord_webhook(new_login_players, True)
+            
+            export_players_json(login_players)
             time.sleep(settings['time']['loop_interval_sec'])
