@@ -1,9 +1,7 @@
 from mcrcon import MCRcon
-from pprint import pprint
 from datetime import datetime as dt
-
+from dotenv import load_dotenv
 import requests
-
 import os, json, csv, io, argparse, time
 
 # ShowPlayersで不正なUIDの時に発行される
@@ -23,14 +21,8 @@ settings = {
         'password': ''
     },
     'time': {
-        # プレイヤ情報の取得間隔
-        'fetch_player_interval_sec': 5,
-        # 自動でプレイヤキックを行うか
-        'use_auto_player_kick': False,
-        # ロード中にプレイヤキックを行うとサーバが無限ロードされるので安全よりに設定する方がよい
-        'auto_kick_player_interval_sec': 3 * 60,
-        # ループ間隔 変更不要
-        'loop_interval_sec': 2
+        # ループ間隔
+        'loop_interval_sec': 5
     },
     'data': {
         # ファイルパス
@@ -45,19 +37,29 @@ settings = {
 def init_setting():
     """引数から設定を初期化
     """
+
+    load_dotenv()
+
     parser = argparse.ArgumentParser(description="Outputs log of Palworld Server's connectee information")
-    parser.add_argument('--webhook_url', help='Discord Webhook URL', default='')
-    parser.add_argument('--address', help='Server address', default='127.0.0.1')
-    parser.add_argument('--port', help='RCON port', default=25575)
-    parser.add_argument('--password', help='Admin password', default='')
-    parser.add_argument('--log_filepath', help='Player log filepath', default='player_log.json')
+    parser.add_argument('--webhook_url', help='Discord Webhook URL', default=os.getenv('DGLN_DISCORD_WEBHOOK_URL', ''))
+    parser.add_argument('--address', help='Server address', default=os.getenv('DGLN_CRON_ADDRESS', '127.0.0.1'))
+    parser.add_argument('--port', help='RCON port', default=os.getenv('DGLN_CRON_PORT', 25575))
+    parser.add_argument('--password', help='Admin password', default=os.getenv('DGLN_CRON_PASSWORD', ''))
+    parser.add_argument('--loop_interval_sec', help='Loop interval(sec)', default=os.getenv('DGLN_LOOP_INTERVAL_SEC', 5))
+    parser.add_argument('--log_filepath', help='Player log filepath', default=os.getenv('DGLN_LOG_FILEPATH', 'player_log.json'))
 
     args = parser.parse_args()
     settings['discord']['webhook_url'] = args.webhook_url
     settings['rcon']['address'] = args.address
     settings['rcon']['port'] = int(args.port)
     settings['rcon']['password'] = args.password
+    settings['time']['loop_interval_sec'] = int(args.loop_interval_sec)
     settings['data']['log_filepath'] = args.log_filepath
+
+    if not settings['discord']['webhook_url']:
+        raise Exception('Discord Webhook URLが設定されていない')
+    if not settings['rcon']['password']:
+        raise Exception('RCONパスワードが設定されていない')
 
 def import_players_json() -> dict:
     """ログを読み込み(過去のプレイヤ情報の復元)
@@ -198,26 +200,21 @@ def send_discord_webhook(login_players: dict, is_login: bool):
     else:
         login_or_logout = 'ログアウト'
 
-    player_count = len(login_players)
     for player in login_players.values():
         name = player['name']
         staemid = player['steamid']
+        webhook_url = settings['discord']['webhook_url']
 
-    webhook_url = settings['discord']['webhook_url']
-
-    if not webhook_url:
-        raise Exception('Discord Webhook URLが設定されていない')
-
-    message = f'{name}（{staemid}）が{login_or_logout}しました'
-    headers = {"Content-Type": "application/json"}
-    data = {"content": message}
-    request = requests.post(
-        webhook_url,
-        data=json.dumps(data).encode(),
-        headers=headers,
-    )
-    if request.status_code != 204:
-        print(f'Discord Web Hookの送信に失敗した。status_code: {request.status_code}')
+        message = f'{name} ({staemid}) が{login_or_logout}しました'
+        headers = {"Content-Type": "application/json"}
+        data = {"content": message}
+        request = requests.post(
+            webhook_url,
+            data=json.dumps(data).encode(),
+            headers=headers,
+        )
+        if request.status_code != 204:
+            print(f'Discordへのメッセージ送信に失敗した。status_code: {request.status_code}')
 
 if __name__ == "__main__":
 
@@ -226,16 +223,25 @@ if __name__ == "__main__":
     prev_fetch_time = dt.now()
 
     with MCRcon(settings['rcon']['address'], settings['rcon']['password'], settings['rcon']['port']) as rcon:
+
+        print('connected to rcon')
+
         old_login_players = {}
         login_players = {}
         while True:
 
             old_login_players = import_players_json()
             login_players = fetch_players(rcon)
+
             new_login_players = extract_new_players(old_login_players, login_players)
-            
             if new_login_players:
                 send_discord_webhook(new_login_players, True)
-            
-            export_players_json(login_players)
+
+            new_logout_players = extract_new_players(login_players, old_login_players)
+            if new_logout_players:
+                send_discord_webhook(new_logout_players, False)
+
+            if login_players != old_login_players:
+                export_players_json(login_players)
+
             time.sleep(settings['time']['loop_interval_sec'])
