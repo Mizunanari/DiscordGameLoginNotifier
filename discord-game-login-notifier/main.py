@@ -42,9 +42,9 @@ def init_setting():
 
     parser = argparse.ArgumentParser(description="Outputs log of Palworld Server's connectee information")
     parser.add_argument('--webhook_url', help='Discord Webhook URL', default=os.getenv('DGLN_DISCORD_WEBHOOK_URL', ''))
-    parser.add_argument('--address', help='Server address', default=os.getenv('DGLN_CRON_ADDRESS', '127.0.0.1'))
-    parser.add_argument('--port', help='RCON port', default=os.getenv('DGLN_CRON_PORT', 25575))
-    parser.add_argument('--password', help='Admin password', default=os.getenv('DGLN_CRON_PASSWORD', ''))
+    parser.add_argument('--address', help='Server address', default=os.getenv('DGLN_RCON_ADDRESS', '127.0.0.1'))
+    parser.add_argument('--port', help='RCON port', default=os.getenv('DGLN_RCON_PORT', 25575))
+    parser.add_argument('--password', help='Admin password', default=os.getenv('DGLN_RCON_PASSWORD', ''))
     parser.add_argument('--loop_interval_sec', help='Loop interval(sec)', default=os.getenv('DGLN_LOOP_INTERVAL_SEC', 5))
     parser.add_argument('--log_filepath', help='Player log filepath', default=os.getenv('DGLN_LOG_FILEPATH', 'player_log.json'))
 
