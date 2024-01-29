@@ -83,7 +83,7 @@ python3 ./discord-game-login-notifier/main.py
 
 Palworldサーバが`palworld.service`に定義されている場合の例。
 
-```toml
+```text
 [Unit]
 Description=Discord Game Login Notifier
 after=palworld.service
