@@ -81,21 +81,13 @@ python3 ./discord-game-login-notifier/main.py
 
 ## Serviceに登録する例
 
-Palworldサーバが`palworld.service`に定義されている場合の例。
-
-```text
+```toml
 [Unit]
 Description=Discord Game Login Notifier
-after=palworld.service
 
 [Service]
-User=steam
-Restart=on-failure
-RestartSec=30s
-WorkingDirectory=/home/steam/DiscordGameLoginnotifier
-ExecStart=/venv/bin/python3 ./discord-game-login-notifier/script.py
-ExecStop=/bin/kill -s INT $MAINPID
-Restart=always
+ExecStart=/home/steam/DiscordGameLoginNotifier/venv/bin/python3 /home/steam/DiscordGameLoginNotifier/discord-game-login-notifier/main.py
+ExecStop=/bin/kill -INT ${MAINPID}
 
 [Install]
 WantedBy=multi-user.target
