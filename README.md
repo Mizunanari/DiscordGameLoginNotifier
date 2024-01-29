@@ -79,6 +79,29 @@ tmux new -s DiscordGameLoginNotifier
 python3 ./discord-game-login-notifier/main.py
 ```
 
+## Serviceに登録する例
+
+Palworldサーバが`palworld.service`に定義されている場合の例。
+
+```toml
+[Unit]
+Description=Discord Game Login Notifier
+after=palworld.service
+
+[Service]
+User=steam
+Restart=on-failure
+RestartSec=30s
+WorkingDirectory=/home/steam/DiscordGameLoginnotifier
+ExecStart=/venv/bin/python3 ./discord-game-login-notifier/script.py
+ExecStop=/bin/kill -s INT $MAINPID
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+```
+
+
 ## 参考
 
 - Discord Web Hook
