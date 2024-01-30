@@ -81,7 +81,7 @@ python3 ./discord-game-login-notifier/main.py
 
 ## Serviceに登録する例
 
-```toml
+```ini
 [Unit]
 Description=Discord Game Login Notifier
 
