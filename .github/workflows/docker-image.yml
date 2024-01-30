@@ -1,5 +1,8 @@
 name: Docker Image CI
 
+permissions:
+  packages: write
+
 on:
   push:
     branches: [ "main" ]
@@ -8,11 +11,13 @@ on:
 
 jobs:
 
-  build:
+  image-push:
 
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v3
     - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
+      run: docker build . --file Dockerfile --tag ghcr.io/Mizunanari/DiscordDiscordGameLoginNotifier:latest
+    - name: Publish the Docker image
+      run: docker push ghcr.io/Mizunanari/DiscordDiscordGameLoginNotifier:latest 
