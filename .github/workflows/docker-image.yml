@@ -20,4 +20,4 @@ jobs:
     - name: Build the Docker image
       run: docker build . --file Dockerfile --tag ghcr.io/mizunanari/dgln:latest
     - name: Publish the Docker image
-      run: docker push ghcr.io/Mizunanari/DiscordDiscordGameLoginNotifier:latest 
+      run: docker push ghcr.io/mizunanari/dgln:latest
