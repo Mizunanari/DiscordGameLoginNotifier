@@ -1,0 +1,79 @@
+Metadata-Version: 2.1
+Name: mcrcon
+Version: 0.7.0
+Summary: A client for handling Remote Commands (RCON) to a Minecraft server.
+Home-page: https://github.com/uncaught-exceptions/mcrcon
+Author: Adrian Turjak
+Author-email: minecraft@uncaught-exceptions.com
+License: MIT
+Keywords: minecraft mcrcon rcon remote command mojang cli
+Platform: UNKNOWN
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: System Administrators
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3.7
+License-File: COPYING.txt
+
+MCRcon
+======
+
+This library provides a straightforward implementation of Minecraft's
+`Rcon protocol`_ in Python to provide a client for handling Remote Commands
+(RCON) to a Minecraft server.
+
+.. _Rcon protocol: http://wiki.vg/Rcon
+
+Installation
+############
+
+The library is availble on PYPI and can be installed with pip::
+
+    pip install mcrcon
+
+Usage
+#####
+
+The recommend way to run this client is using the python 'with' statement.
+This ensures that the socket is correctly closed when you are done with it
+rather than being left open.
+
+Example::
+
+    In [1]: from mcrcon import MCRcon
+    In [2]: with MCRcon("10.1.1.1", "sekret") as mcr:
+       ...:     resp = mcr.command("/whitelist add bob")
+       ...:     print(resp)
+
+While you can use it without the 'with' statement, you have to connect
+manually, and ideally disconnect::
+
+    In [3]: mcr = MCRcon("10.1.1.1", "sekret")
+    In [4]: mcr.connect()
+    In [5]: resp = mcr.command("/whitelist add bob")
+    In [6]: print(resp)
+    In [7]: mcr.disconnect()
+
+Command Line Usage
+##################
+
+After installing the package a cli will be included that can be used.
+
+Help can be gotten by doing::
+
+    mcrcon --help
+
+You can connect from the console with commands like the following::
+
+    mcrcon 10.1.1.1
+
+You will either be prompted for your password, or you can set it as follows
+as an environment variable::
+
+    export RCON_PASSWORD=sekret
+
+And then you can run commands on the server interactively::
+
+    > /whitelist add bob
+
+
