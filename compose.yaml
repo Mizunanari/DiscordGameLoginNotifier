@@ -1,0 +1,7 @@
+services:
+  dgln:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    image: dgln
+    container_name: dgln
