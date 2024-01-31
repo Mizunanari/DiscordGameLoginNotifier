@@ -4,4 +4,4 @@ COPY .. ./DiscordGameLoginNotifier
 WORKDIR /DiscordGameLoginNotifier
 RUN pip install -r requirements.txt
 
-ENTRYPOINT [ "python3","./discord-game-login-notifier/main.py" ]
+ENTRYPOINT [ "python3", "-u", "./discord-game-login-notifier/main.py" ]
