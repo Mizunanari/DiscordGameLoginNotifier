@@ -6,7 +6,7 @@ authors = ["Mizunanari"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.12"
 mcrcon = "^0.7.0"
 requests = "^2.31.0"
 python-dotenv = "^1.0.1"
