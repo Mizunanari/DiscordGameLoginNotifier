@@ -4,7 +4,7 @@ services:
     restart: always
     environment:
       DGLN_DISCORD_WEBHOOK_URL: 
-      DGLN_RCON_ADDRESS: pal
+      DGLN_RCON_ADDRESS: 
       DGLN_RCON_PORT: 25575
       DGLN_RCON_PASSWORD: 
       DGLN_LOOP_INTERVAL_SEC: 5
