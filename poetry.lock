@@ -127,9 +127,14 @@ version = "0.7.0"
 description = "A client for handling Remote Commands (RCON) to a Minecraft server."
 optional = false
 python-versions = "*"
-files = [
-    {file = "mcrcon-0.7.0.tar.gz", hash = "sha256:c2f1caf2467e283e0ccd2436f1ce21f04242b03c5fafb3860e3924d764a910d4"},
-]
+files = []
+develop = false
+
+[package.source]
+type = "git"
+url = "https://github.com/Mizunanari/PalRcon.git"
+reference = "HEAD"
+resolved_reference = "a7d9462787254eabd339ba004eb46063bd69c1b5"
 
 [[package]]
 name = "python-dotenv"
@@ -186,4 +191,4 @@ zstd = ["zstandard (>=0.18.0)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "2822a494ed1546a9d315cfecc640c80496be21ccb2685453e5a3971fffaa1ba5"
+content-hash = "30a630b0089f2185e3ee02ae4df1911332f038989e911130b08614e3df3285ab"
