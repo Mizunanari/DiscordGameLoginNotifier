@@ -72,11 +72,38 @@ pip install -r requirements.txt
 
 ###  実行する
 
-tmux経由で実行し、バックグラウンドでも動作するようにします。
+tmux経由で実行し、バックグラウンドでも動作するようにする。
 
 ```
 tmux new -s DiscordGameLoginNotifier
 python3 ./discord-game-login-notifier/main.py
+```
+
+## Composeで動かす例
+
+`compose.yaml`の環境変数に値を入力する。
+
+```yaml
+    environment:
+      DGLN_DISCORD_WEBHOOK_URL: https://discord-webhook-url
+      DGLN_RCON_ADDRESS: 192.168.1.50
+      DGLN_RCON_PORT: 25575
+      DGLN_RCON_PASSWORD: adminPassword
+      DGLN_LOOP_INTERVAL_SEC: 5
+      DGLN_LOG_FILEPATH: player_log.json
+```
+
+起動する。
+
+```bash
+docker compose up -d
+docker compose logs
+```
+
+接続完了すると下記のログが表示される。
+
+```
+connected to rcon
 ```
 
 ## Serviceに登録する例
