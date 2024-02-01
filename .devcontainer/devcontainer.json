@@ -11,7 +11,7 @@
 				"ms-python.isort"
 			]
 		}
-	}
+	},
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	// "features": {},
@@ -21,6 +21,7 @@
 
 	// Use 'postCreateCommand' to run commands after the container is created.
 	// "postCreateCommand": "pip3 install --user -r requirements.txt",
+	"postCreateCommand": "curl -sSL https://install.python-poetry.org | python3 -"
 
 	// Configure tool-specific properties.
 	// "customizations": {},
