@@ -23,16 +23,57 @@ PalWorldのサーバアプリケーションの[設定パラメータ](https://t
 | RCONEnabled | True   |
 | RCONPort    | 25575  |
 
-### 3. DiscordGameLoginNotifierをクローン
+## Composeで動かす
+
+Dockerを使用してコンテナで動作させます。下記を参考にDockerをインストールしておく必要があります。いくつかインストール方法がありますが、aptなどのパッケージ管理システムを使用してインストールすることをお勧めします。インストール後は、Linux-postinstallを参考にユーザに権限を付与します。
+
+1. https://docs.docker.com/engine/install/
+2. https://docs.docker.com/engine/install/linux-postinstall/
+
+### 1. 環境変数の書き換え
+
+`compose.yaml`の環境変数に値を入力します。
+
+```yaml
+    environment:
+      DGLN_DISCORD_WEBHOOK_URL: https://discord-webhook-url
+      DGLN_RCON_ADDRESS: 192.168.1.50
+      DGLN_RCON_PORT: 25575
+      DGLN_RCON_PASSWORD: adminPassword
+      DGLN_LOOP_INTERVAL_SEC: 5
+      DGLN_LOG_FILEPATH: player_log.json
+```
+
+### 2. 起動
+
+```bash
+docker compose up -d
+```
+
+### 3. 起動確認
+
+```
+docker compose logs
+```
+
+RCONが正常に接続されると下記のログが表示されます。
+
+```
+connected to rcon
+```
+
+## TMUXで動かす
+
+### 1. DiscordGameLoginNotifierを準備
 
 DiscordGameLoginNotifierをサーバにクローンします。
 
 ```bash
-git clone https://github.com/Mizunanari/DiscordGameLoginNotifier.git
+git clone --depth=1 https://github.com/Mizunanari/DiscordGameLoginNotifier.git
 cd DiscordGameLoginNotifier
 ```
 
-### 4. ".env"ファイルを作成する
+### 2. ".env"ファイルを作成する
 
 example.envを元に、.envファイルを作成します。
 
@@ -51,62 +92,49 @@ DGLN_LOOP_INTERVAL_SEC='5'
 DGLN_LOG_FILEPATH='player_log.json'
 ```
 
-| 変数                     | 説明                                                         | 例              |
-| ------------------------ | ------------------------------------------------------------ | --------------- |
-| DGLN_DISCORD_WEBHOOK_URL | Discordで発行したWebHookのURLを指定する                      | -               |
-| DGLN_RCON_ADDRESS        | RCONのアドレスを指定する                                     | 192.168.100.50  |
-| DGLN_RCON_PORT           | RCONのポートを指定する                                       | 25575           |
-| DGLN_RCON_PASSWORD       | RCONのAdmin Passwordを指定する                               | -               |
-| DGLN_LOOP_INTERVAL_SEC   | RCONから取得するプレイヤ情報のポーリング間隔（秒）を指定する | 5               |
-| DGLN_LOG_FILEPATH        | 出力するログイン中プレイヤのJSONファイルの名前を指定する     | player_log.json |
+| 変数                     | 説明                                                         |
+| ------------------------ | ------------------------------------------------------------ |
+| DGLN_DISCORD_WEBHOOK_URL | Discordで発行したWebHookのURLを指定する                      |
+| DGLN_RCON_ADDRESS        | RCONのアドレスを指定する                                     |
+| DGLN_RCON_PORT           | RCONのポートを指定する                                       |
+| DGLN_RCON_PASSWORD       | RCONのAdmin Passwordを指定する                               |
+| DGLN_LOOP_INTERVAL_SEC   | RCONから取得するプレイヤ情報のポーリング間隔（秒）を指定する |
+| DGLN_LOG_FILEPATH        | 出力するログイン中プレイヤのJSONファイルの名前を指定する     |
 
-### 5. Pythonパッケージのインストール
+### 3. Pythonパッケージのインストール
 
-Ubuntuの場合は、`sudo apt install python3.10-venv`を実行しておく必要がある。
+必要に応じてPythonパッケージをインストールする。
+
+### 4. 仮想環境の作成
 
 ```
 python3 -m venv venv
+```
+
+### 5. シェルの起動
+
+```
 source venv/bin/activate
+```
+
+### 6. パッケージのインストール
+
+```
 pip install -r requirements.txt
 ```
 
-###  実行する
+###  7. 実行
 
-tmux経由で実行し、バックグラウンドでも動作するようにする。
+下記の例ではtmux経由で実行し、バックグラウンドでも動作すようにしている。
 
 ```
 tmux new -s DiscordGameLoginNotifier
 python3 ./discord-game-login-notifier/main.py
 ```
 
-## Composeで動かす例
+## Serviceに登録する
 
-`compose.yaml`の環境変数に値を入力する。
-
-```yaml
-    environment:
-      DGLN_DISCORD_WEBHOOK_URL: https://discord-webhook-url
-      DGLN_RCON_ADDRESS: 192.168.1.50
-      DGLN_RCON_PORT: 25575
-      DGLN_RCON_PASSWORD: adminPassword
-      DGLN_LOOP_INTERVAL_SEC: 5
-      DGLN_LOG_FILEPATH: player_log.json
-```
-
-起動する。
-
-```bash
-docker compose up -d
-docker compose logs
-```
-
-接続完了すると下記のログが表示される。
-
-```
-connected to rcon
-```
-
-## Serviceに登録する例
+Unitファイルの例
 
 ```ini
 [Unit]
