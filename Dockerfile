@@ -1,7 +1,9 @@
 FROM python:3.12.1 
 
-COPY .. ./DiscordGameLoginNotifier
-WORKDIR /DiscordGameLoginNotifier
+WORKDIR /app
+COPY discord-game-login-notifier/ .
+COPY requirements.txt .
+COPY rcon-cli /usr/local/bin/
 RUN pip install -r requirements.txt
 
-ENTRYPOINT [ "python3", "-u", "./discord-game-login-notifier/main.py" ]
+ENTRYPOINT [ "python3", "-u", "main.py" ]

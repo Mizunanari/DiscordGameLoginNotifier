@@ -1,0 +1,3 @@
+#!/bin/sh
+echo "$@" | mcrcon --password ${DGLN_RCON_PASSWORD} -p ${DGLN_RCON_PORT} ${DGLN_RCON_ADDRESS}
+
