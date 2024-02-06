@@ -179,7 +179,7 @@ def fetch_players(rcon: MCRcon) -> dict:
                     f"{playeruid_hex_padded}.{settings['data']['save_file_extension']}"
                 )
 
-                players[steamid] = {
+                players[playeruid] = {
                     "name": name,
                     "playeruid": playeruid,
                     "steamid": steamid,
@@ -203,8 +203,8 @@ def print_login_players(login_players: dict):
     player_count = len(login_players)
     for player in login_players.values():
         name = player["name"]
-        staemid = player["steamid"]
-        print(f"{name}({staemid})")
+        playeruid = player["playeruid"]
+        print(f"{name}({playeruid})")
 
 
 def extract_new_players(all_players: dict, login_players: dict):
@@ -216,12 +216,12 @@ def extract_new_players(all_players: dict, login_players: dict):
     """
 
     new_players = {}
-    for steamid, value in login_players.items():
-        old_player = steamid in all_players
+    for key, value in login_players.items():
+        old_player = key in all_players
         if old_player:
             continue
 
-        new_players[steamid] = value
+        new_players[key] = value
 
     return new_players
 
@@ -234,16 +234,18 @@ def send_discord_webhook(login_players: dict, is_login: bool):
     """
 
     if is_login:
+        mark = ":o:"
         login_or_logout = "ログイン"
     else:
+        mark = ":x:"
         login_or_logout = "ログアウト"
 
     for player in login_players.values():
         name = player["name"]
-        staemid = player["steamid"]
+        playeruid = player["playeruid"]
         webhook_url = settings["discord"]["webhook_url"]
 
-        message = f"{name} ({staemid}) が{login_or_logout}しました"
+        message = f"{mark} {name} ({playeruid}) が{login_or_logout}しました"
         headers = {"Content-Type": "application/json"}
         data = {"content": message}
         request = requests.post(
