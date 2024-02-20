@@ -3,46 +3,45 @@ version: '3'
 services:
   pal:
     container_name: pal
+    # https://github.com/thijsvanloef/palworld-server-docker
     image: thijsvanloef/palworld-server-docker:latest
     restart: unless-stopped
-    stop_grace_period: 30s
+    #stop_grace_period: 30s
     tty: true
     volumes:
       - ./palworld:/palworld/
     environment:
-      TZ: Asia/Tokyo
-      PUID: 1000
-      PGID: 999
+      TZ: ${TZ:-UTC}
+      PUID: ${PUID:-1000}
+      PGID: ${PGID:-1000}
       PORT: 8211
-      PLAYERS: 32
-      SERVER_PASSWORD: ""
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
-      MULTITHREADING: true
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin}
       RCON_ENABLED: true
       RCON_PORT: 25575
       COMMUNITY: false
-      SERVER_NAME: "TEST"
-      SERVER_DESCRIPTION: "Test in Docker"
-      DISCORD_WEBHOOK_URL: ${WEBHOOK}
+      SERVER_NAME: ${SERVER_NAME:-TEST}
+      SERVER_DESCRIPTION: ${SERVER_DESCRIPTION:-Test in Docker}
+      DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL}
       BACKUP_ENABLED: false
     ports:
-      - "${PORT}:8211/udp"
-      - "${RCON_PORT}:25575/tcp"
+      - "${PORT:-8211}:8211/udp"
+      - "${RCON_PORT:-25575}:25575/tcp"
     healthcheck:
       test: rcon-cli info
 
   dgln:
     container_name: dgln
+    # https://github.com/Mizunanari/DiscordGameLoginNotifier
     image: ghcr.io/mizunanari/dgln:latest
-    restart: always
+    restart: unless-stopped
     tty: true
     depends_on:
       pal:
         condition: service_healthy
     environment:
-      DGLN_DISCORD_WEBHOOK_URL: ${WEBHOOK}
+      DGLN_DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL}
       DGLN_RCON_ADDRESS: pal
       DGLN_RCON_PORT: 25575
-      DGLN_RCON_PASSWORD: ${ADMIN_PASSWORD}
+      DGLN_RCON_PASSWORD: ${ADMIN_PASSWORD:-admin}
       DGLN_LOOP_INTERVAL_SEC: 5
       DGLN_LOG_FILEPATH: player_log.json
