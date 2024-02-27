@@ -23,6 +23,7 @@ services:
       SERVER_DESCRIPTION: ${SERVER_DESCRIPTION:-Test in Docker}
       DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL}
       BACKUP_ENABLED: false
+      ENABLE_PLAYER_LOGGING: false
     ports:
       - "${PORT:-8211}:8211/udp"
       - "${RCON_PORT:-25575}:25575/tcp"
